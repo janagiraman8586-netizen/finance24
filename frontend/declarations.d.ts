@@ -45,12 +45,15 @@ declare module 'lucide-react' {
   export const FileText: any;
   export const Settings: any;
   export const Shield: any;
+  export const ShieldAlert: any;
   export const Users: any;
+  export const User: any;
+  export const UserCheck: any;
+  export const UserX: any;
   export const FolderTree: any;
   export const Bell: any;
   export const History: any;
   export const LogOut: any;
-  export const User: any;
   export const CheckCheck: any;
   export const AlertTriangle: any;
   export const Info: any;
