@@ -13,24 +13,26 @@ from app.api.routes import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("finance_app")
 
-# Initialize database tables & seed defaults
-try:
-    Base.metadata.create_all(bind=engine)
-    logger.info("Database tables initialized successfully.")
-    try:
-        from init_db import seed_database
-        seed_database()
-        logger.info("Default roles, categories, and demo users verified.")
-    except Exception as seed_err:
-        logger.warning(f"Database auto-seeding notice: {seed_err}")
-except Exception as err:
-    logger.error(f"Failed to initialize database tables: {err}")
-
 app = FastAPI(
     title="Finance Management System API",
     description="Comprehensive Personal & Enterprise Finance Management Backend",
     version="1.0.0"
 )
+
+# Initialize database tables & seed defaults on startup without blocking module import
+@app.on_event("startup")
+def startup_event():
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables initialized successfully.")
+        try:
+            from init_db import seed_database
+            seed_database()
+            logger.info("Default roles, categories, and demo users verified.")
+        except Exception as seed_err:
+            logger.warning(f"Database auto-seeding notice: {seed_err}")
+    except Exception as err:
+        logger.error(f"Failed to initialize database tables: {err}")
 
 # Configure CORS
 origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
