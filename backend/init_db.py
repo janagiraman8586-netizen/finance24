@@ -62,7 +62,29 @@ def seed_database():
 
         db.commit()
 
-        # 4. Seed User
+        # 4. Seed Primary User (kpraman8586@gmail.com)
+        raman_user = db.query(User).filter(User.email == "kpraman8586@gmail.com").first()
+        if not raman_user:
+            raman_user = User(
+                email="kpraman8586@gmail.com",
+                username="raman_janagiraman",
+                hashed_password=hash_password("Password123!"),
+                first_name="Raman",
+                last_name="Janagiraman",
+                is_active=True
+            )
+            raman_user.roles.append(role_user)
+            raman_user.roles.append(role_admin)
+            db.add(raman_user)
+            db.commit()
+            db.refresh(raman_user)
+        else:
+            if role_admin not in raman_user.roles:
+                raman_user.roles.append(role_admin)
+            raman_user.is_active = True
+            db.commit()
+
+        # 5. Seed Demo User
         user = db.query(User).filter(User.email == "user@example.com").first()
         if not user:
             user = User(
@@ -78,7 +100,7 @@ def seed_database():
             db.commit()
             db.refresh(user)
 
-        # 5. Seed Admin User
+        # 6. Seed Admin User
         admin = db.query(User).filter(User.email == "admin@example.com").first()
         if not admin:
             admin = User(
@@ -94,83 +116,78 @@ def seed_database():
             db.commit()
             db.refresh(admin)
 
-        # 6. Seed Sample Financial Data for user
-        if db.query(Income).filter(Income.user_id == user.id).count() == 0:
-            db.add(Income(
-                user_id=user.id,
-                amount=75000.00,
-                source="Salary",
-                description="Monthly Software Engineer Salary",
-                date=datetime.utcnow() - timedelta(days=5)
-            ))
-            db.add(Income(
-                user_id=user.id,
-                amount=15000.00,
-                source="Freelance",
-                description="Web Design Client Project",
-                date=datetime.utcnow() - timedelta(days=2)
-            ))
-
-        food_cat = db.query(Category).filter(Category.name == "Food & Dining").first()
-        trans_cat = db.query(Category).filter(Category.name == "Transportation").first()
-        util_cat = db.query(Category).filter(Category.name == "Utilities & Bills").first()
-
-        if db.query(Expense).filter(Expense.user_id == user.id).count() == 0:
-            if food_cat:
-                db.add(Expense(
-                    user_id=user.id,
-                    amount=1850.00,
-                    category_id=food_cat.id,
-                    description="Weekly Supermarket Grocery",
-                    payment_method="UPI",
-                    date=datetime.utcnow() - timedelta(days=3)
+        # 7. Seed Sample Financial Data for raman_user and demo user
+        now = datetime.utcnow()
+        for target_u, base_income in [(raman_user, 95000.00), (user, 75000.00)]:
+            if not target_u:
+                continue
+            if db.query(Income).filter(Income.user_id == target_u.id).count() == 0:
+                db.add(Income(
+                    user_id=target_u.id,
+                    amount=base_income,
+                    source="Salary",
+                    description="Monthly Primary Salary",
+                    date=now - timedelta(days=5)
                 ))
-            if trans_cat:
-                db.add(Expense(
-                    user_id=user.id,
-                    amount=650.00,
-                    category_id=trans_cat.id,
-                    description="Fuel Station Refill",
-                    payment_method="Credit Card",
-                    date=datetime.utcnow() - timedelta(days=1)
+                db.add(Income(
+                    user_id=target_u.id,
+                    amount=20000.00,
+                    source="Freelance",
+                    description="Project Consultation & Services",
+                    date=now - timedelta(days=2)
                 ))
-            if util_cat:
-                db.add(Expense(
-                    user_id=user.id,
-                    amount=3200.00,
-                    category_id=util_cat.id,
-                    description="High-speed Fiber Internet Bill",
-                    payment_method="Net Banking",
-                    date=datetime.utcnow()
+
+            if db.query(Expense).filter(Expense.user_id == target_u.id).count() == 0:
+                if food_cat:
+                    db.add(Expense(
+                        user_id=target_u.id,
+                        amount=2450.00,
+                        category_id=food_cat.id,
+                        description="Weekly Supermarket Grocery",
+                        payment_method="UPI",
+                        date=now - timedelta(days=3)
+                    ))
+                if trans_cat:
+                    db.add(Expense(
+                        user_id=target_u.id,
+                        amount=850.00,
+                        category_id=trans_cat.id,
+                        description="Fuel & Transport",
+                        payment_method="Credit Card",
+                        date=now - timedelta(days=1)
+                    ))
+                if util_cat:
+                    db.add(Expense(
+                        user_id=target_u.id,
+                        amount=3200.00,
+                        category_id=util_cat.id,
+                        description="High-speed Fiber Internet Bill",
+                        payment_method="Net Banking",
+                        date=now
+                    ))
+
+            if db.query(Budget).filter(Budget.user_id == target_u.id, Budget.month == now.month, Budget.year == now.year).count() == 0:
+                b = Budget(user_id=target_u.id, month=now.month, year=now.year, total_amount=50000.00)
+                db.add(b)
+                db.flush()
+                if food_cat:
+                    db.add(BudgetCategory(budget_id=b.id, category_id=food_cat.id, allocated_amount=15000.00))
+                if trans_cat:
+                    db.add(BudgetCategory(budget_id=b.id, category_id=trans_cat.id, allocated_amount=8000.00))
+                if util_cat:
+                    db.add(BudgetCategory(budget_id=b.id, category_id=util_cat.id, allocated_amount=10000.00))
+
+            if db.query(SavingsGoal).filter(SavingsGoal.user_id == target_u.id).count() == 0:
+                db.add(SavingsGoal(
+                    user_id=target_u.id,
+                    title="Emergency & Wealth Fund",
+                    target_amount=300000.00,
+                    current_amount=75000.00,
+                    target_date=now + timedelta(days=365),
+                    status="active"
                 ))
 
         db.commit()
-
-        # Seed Budget
-        now = datetime.utcnow()
-        if db.query(Budget).filter(Budget.user_id == user.id, Budget.month == now.month, Budget.year == now.year).count() == 0:
-            b = Budget(user_id=user.id, month=now.month, year=now.year, total_amount=45000.00)
-            db.add(b)
-            db.flush()
-            if food_cat:
-                db.add(BudgetCategory(budget_id=b.id, category_id=food_cat.id, allocated_amount=12000.00))
-            if trans_cat:
-                db.add(BudgetCategory(budget_id=b.id, category_id=trans_cat.id, allocated_amount=5000.00))
-            if util_cat:
-                db.add(BudgetCategory(budget_id=b.id, category_id=util_cat.id, allocated_amount=8000.00))
-            db.commit()
-
-        # Seed Savings Goal
-        if db.query(SavingsGoal).filter(SavingsGoal.user_id == user.id).count() == 0:
-            db.add(SavingsGoal(
-                user_id=user.id,
-                title="Emergency Reserve Fund",
-                target_amount=150000.00,
-                current_amount=45000.00,
-                target_date=now + timedelta(days=365),
-                status="active"
-            ))
-            db.commit()
 
         print("[SUCCESS] Database successfully initialized and seeded!")
 

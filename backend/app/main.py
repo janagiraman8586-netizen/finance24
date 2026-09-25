@@ -34,9 +34,20 @@ app = FastAPI(
 
 # Configure CORS
 origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
+default_origins = [
+    "https://finance24.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:3000"
+]
+for o in default_origins:
+    if o not in origins:
+        origins.append(o)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins if origins else ["*"],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -46,10 +57,17 @@ app.add_middleware(
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled exception on {request.url}: {exc}", exc_info=True)
-    return JSONResponse(
+    resp = JSONResponse(
         status_code=500,
         content={"detail": "Internal Server Error", "error": str(exc)}
     )
+    req_origin = request.headers.get("origin")
+    if req_origin:
+        resp.headers["Access-Control-Allow-Origin"] = req_origin
+        resp.headers["Access-Control-Allow-Credentials"] = "true"
+        resp.headers["Access-Control-Allow-Methods"] = "*"
+        resp.headers["Access-Control-Allow-Headers"] = "*"
+    return resp
 
 # Health check route
 @app.get("/health", tags=["Health"])
