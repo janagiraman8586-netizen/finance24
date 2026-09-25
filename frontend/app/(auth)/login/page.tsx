@@ -92,13 +92,6 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <div className="mt-6 text-center text-xs text-slate-400">
-        Don&apos;t have an account?{' '}
-        <Link href="/register" className="text-blue-400 font-semibold hover:underline">
-          Create Account
-        </Link>
-      </div>
-
       <div className="mt-6 pt-4 border-t border-slate-800 text-[11px] text-slate-400">
         <p className="font-semibold mb-2 text-slate-300">Quick Sign In Accounts (Click to Fill):</p>
         <div className="space-y-1.5">
