@@ -59,7 +59,7 @@ def update_profile(
     current_user = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    user = update_user_profile(db, current_user.id, req.first_name, req.last_name, req.username)
+    user = update_user_profile(db, current_user.id, req.first_name, req.last_name, req.username, req.email)
     log_audit(db, current_user.id, "profile_update", "users", user.id, "Profile updated")
     roles = [r.name for r in user.roles]
     return {

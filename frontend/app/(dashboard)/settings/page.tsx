@@ -27,7 +27,19 @@ export default function SettingsPage() {
     first_name: user?.first_name || '',
     last_name: user?.last_name || '',
     username: user?.username || '',
+    email: user?.email || '',
   });
+
+  useEffect(() => {
+    if (user) {
+      setProfile({
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        username: user.username || '',
+        email: user.email || '',
+      });
+    }
+  }, [user]);
 
   const [passwordForm, setPasswordForm] = useState({
     current_password: '',
@@ -178,11 +190,21 @@ export default function SettingsPage() {
             />
           </div>
 
-          <Input
-            label="Username"
-            value={profile.username}
-            onChange={(e) => setProfile({ ...profile, username: e.target.value })}
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Username"
+              value={profile.username}
+              onChange={(e) => setProfile({ ...profile, username: e.target.value })}
+              required
+            />
+            <Input
+              label="Email Address"
+              type="email"
+              value={profile.email}
+              onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+              required
+            />
+          </div>
 
           <div className="flex items-center gap-3 pt-2">
             <Button type="submit" size="sm" isLoading={loadingProfile}>Save Profile Changes</Button>

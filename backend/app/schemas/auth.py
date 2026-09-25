@@ -45,6 +45,7 @@ class ProfileUpdateRequest(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     username: Optional[str] = Field(None, min_length=3, max_length=50)
+    email: Optional[EmailStr] = None
 
 class ChangePasswordRequest(BaseModel):
     current_password: str

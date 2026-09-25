@@ -66,7 +66,7 @@ def authenticate_user(db: Session, req: LoginRequest):
 
     return {"access_token": token, "token_type": "bearer", "user": user_data}
 
-def update_user_profile(db: Session, user_id: int, first_name: str = None, last_name: str = None, username: str = None):
+def update_user_profile(db: Session, user_id: int, first_name: str = None, last_name: str = None, username: str = None, email: str = None):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -76,6 +76,12 @@ def update_user_profile(db: Session, user_id: int, first_name: str = None, last_
         if existing:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username already in use")
         user.username = username
+
+    if email and email != user.email:
+        existing_email = db.query(User).filter(User.email == email).first()
+        if existing_email:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered by another account")
+        user.email = email
     
     if first_name is not None:
         user.first_name = first_name
