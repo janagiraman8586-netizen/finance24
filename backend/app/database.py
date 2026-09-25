@@ -1,20 +1,11 @@
 import logging
 import socket
 import urllib.parse
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 from app.config import settings
 
 logger = logging.getLogger("finance_app")
-
-def can_resolve(host: str) -> bool:
-    if not host or host in ("localhost", "127.0.0.1"):
-        return True
-    try:
-        socket.gethostbyname(host)
-        return True
-    except Exception:
-        return False
 
 def initialize_engine():
     db_url = settings.DATABASE_URL
@@ -25,23 +16,21 @@ def initialize_engine():
 
     if not db_url.startswith("sqlite"):
         try:
-            # Parse host from URL to check resolution without blocking
-            parsed = urllib.parse.urlparse(db_url.replace("postgresql+psycopg2://", "http://"))
-            host = parsed.hostname
-            if host and can_resolve(host):
-                eng = create_engine(
-                    db_url,
-                    connect_args={"connect_timeout": 3},
-                    pool_pre_ping=True
-                )
-                logger.info(f"Connected to primary PostgreSQL database at {host}.")
-                return eng
-            else:
-                logger.warning(f"Database host '{host}' is unresolvable via DNS. Falling back to local SQLite.")
+            logger.info("Attempting connection to configured PostgreSQL database...")
+            eng = create_engine(
+                db_url,
+                connect_args={"connect_timeout": 3},
+                pool_pre_ping=True
+            )
+            # Actively test connection so unreachable hosts fail fast
+            with eng.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            logger.info("Successfully connected to primary PostgreSQL database.")
+            return eng
         except Exception as e:
-            logger.warning(f"Could not initialize PostgreSQL engine ({e}). Falling back to SQLite.")
+            logger.warning(f"PostgreSQL connection test failed ({e}). Falling back to local SQLite.")
 
-    # Instant, zero-delay SQLite fallback
+    # Guaranteed non-blocking SQLite fallback
     logger.info("Using local SQLite database: finance.db")
     return create_engine(
         "sqlite:///./finance.db",

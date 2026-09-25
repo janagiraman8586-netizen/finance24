@@ -74,7 +74,13 @@ async def global_exception_handler(request: Request, exc: Exception):
 # Health check route
 @app.get("/health", tags=["Health"])
 def health_check():
-    return {"status": "ok", "environment": settings.ENVIRONMENT}
+    db_backend = "sqlite" if "sqlite" in str(engine.url) else "postgresql"
+    return {
+        "status": "ok",
+        "environment": settings.ENVIRONMENT,
+        "database": db_backend,
+        "version": "1.0.2"
+    }
 
 # Include API Routers
 app.include_router(auth.router, prefix="/api")

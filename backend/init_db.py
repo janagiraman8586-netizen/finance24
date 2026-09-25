@@ -118,6 +118,10 @@ def seed_database():
 
         # 7. Seed Sample Financial Data for raman_user and demo user
         now = datetime.utcnow()
+        food_cat = db.query(Category).filter(Category.name == "Food & Dining").first()
+        trans_cat = db.query(Category).filter(Category.name == "Transportation").first()
+        util_cat = db.query(Category).filter(Category.name == "Utilities & Bills").first()
+
         for target_u, base_income in [(raman_user, 95000.00), (user, 75000.00)]:
             if not target_u:
                 continue
