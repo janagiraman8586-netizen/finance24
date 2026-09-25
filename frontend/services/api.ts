@@ -1,12 +1,11 @@
 import axios from 'axios';
 
-declare const process: { env?: { [key: string]: string | undefined } };
-
-let rawApiUrl = (typeof globalThis.process !== 'undefined' && globalThis.process.env?.NEXT_PUBLIC_API_URL) || 'http://localhost:8000';
+// Direct access to process.env.NEXT_PUBLIC_API_URL so Next.js inlines the value into client bundles
+let rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 if (rawApiUrl && !rawApiUrl.startsWith('http://') && !rawApiUrl.startsWith('https://')) {
   rawApiUrl = `https://${rawApiUrl}`;
 }
-const API_URL = rawApiUrl;
+export const API_URL = rawApiUrl;
 
 export const api = axios.create({
   baseURL: `${API_URL}/api`,

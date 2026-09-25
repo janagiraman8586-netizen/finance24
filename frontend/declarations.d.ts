@@ -75,6 +75,18 @@ declare module 'lucide-react' {
   export const ChevronLeft: any;
   export const ChevronRight: any;
   export const ArrowUpDown: any;
+  export const ArrowUp: any;
+  export const ArrowDown: any;
+  export const ArrowRight: any;
+  export const Eye: any;
+  export const Clock: any;
+  export const ShieldCheck: any;
+  export const CheckCircle: any;
+  export const HelpCircle: any;
+  export const Lightbulb: any;
+  export const FileSpreadsheet: any;
+  export const Layers: any;
+  export const Menu: any;
   export const Printer: any;
   export const CreditCard: any;
   export const Lock: any;
@@ -95,6 +107,8 @@ declare module 'recharts' {
   export const Cell: any;
   export const LineChart: any;
   export const Line: any;
+  export const AreaChart: any;
+  export const Area: any;
   export const CartesianGrid: any;
   export const Legend: any;
   const allRecharts: { [key: string]: any };
