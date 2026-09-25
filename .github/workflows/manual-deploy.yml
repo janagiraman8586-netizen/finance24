@@ -1,0 +1,67 @@
+name: Manual Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: 'Target Environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+jobs:
+  build-and-test:
+    name: Build & Validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Backend Dependencies & Lint Check
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies & Build
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || 'https://finance-backend.onrender.com' }}
+
+  trigger-render-deploy:
+    name: Trigger Render Backend Deployment
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Render
+        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+
+  trigger-vercel-deploy:
+    name: Trigger Vercel Frontend Deployment
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to Vercel
+        if: ${{ secrets.VERCEL_DEPLOY_HOOK_URL != '' }}
+        run: |
+          curl -X POST "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}"
